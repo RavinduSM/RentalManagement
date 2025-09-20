@@ -1,6 +1,6 @@
+import BuildingList from "@/components/building/buildingList";
 import ComponentCard from "@/components/common/ComponentCard";
 import PageBreadcrumb from "@/components/common/PageBreadCrumb";
-import TenantList from "@/components/tenants/tenantList";
 import { Metadata } from "next";
 import React from "react";
 
@@ -13,10 +13,10 @@ export const metadata: Metadata = {
 export default function FormElements() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Tenant" />
+      <PageBreadcrumb pageTitle="Building" />
         <div className="space-y-6">
-          <ComponentCard title="Basic Table 1">
-            <TenantList />
+          <ComponentCard title="">
+            <BuildingList />
           </ComponentCard>
         </div>
     </div>

@@ -10,84 +10,147 @@ import TextArea from './input/TextArea';
 
 export default function TenantForm() {
 
-  const handleSelectChange = (value: string) => {
-    console.log("Selected value:", value);
-  };
+  const [form, setForm] = useState({
+    fullName: "",
+    callingName: "",
+    nicNo: "",
+    contactNo: "",
+    address: "",
+    joinedDate: new Date().toISOString().split("T")[0],
+  });
+
+  const [startDate, setStartDate] = useState(new Date());
+  const [message, setMessage] = useState("");
+
+
+ function handleChange(e) {
+     const { name, value, type, checked } = e.target;
+    setForm({
+      ...form,
+      [name]: type === "checkbox" ? checked : value,
+    });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+  e.preventDefault();
+  setMessage("");
+
+  // Simple frontend validation
+  const emptyField = Object.entries(form).find(([key, value]) => !value?.toString().trim());
+  if (emptyField) {
+    setMessage(`❌ ${emptyField[0]} is required`);
+    return;
+  }
+
+  const res = await fetch("/api/tenants", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(form),
+  });
+
+  const data = await res.json();
+
+  if (res.ok) {
+    setMessage("✅ Tenant added successfully!");
+    setForm({
+      fullName: "",
+      callingName: "",
+      nicNo: "",
+      contactNo: "",
+      address: "",
+      joinedDate: new Date().toISOString().split("T")[0],
+    });
+  } else {
+    setMessage("❌ " + (data.error || "Something went wrong"));
+  }
+}
+
+
+
   return (
     <ComponentCard title="Tenant">
       <div className="space-y-6">
+      <form onSubmit={handleSubmit}> 
         <div>
           <Label>Full Name</Label>
-          <Input type="text" placeholder="John Smith" />
+          <Input
+            type="text"
+            name="fullName"
+            id="fullName"
+            placeholder="Full Name"
+            value={form.fullName}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div>
           <Label>Calling Name</Label>
-          <Input type="text" placeholder="John" />
+          <Input
+            type="text"
+            name="callingName"
+            id="callingName"
+            placeholder="Calling Name"
+            value={form.callingName}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div>
           <Label>NIC No</Label>
-          <Input type="text" placeholder="970561356V" />
+           <Input
+          type="text"
+          name="nicNo"
+          placeholder="NIC Number"
+          value={form.nicNo}
+          onChange={handleChange}
+          required
+        />
+        </div>
+
+        <div>
+          <Label htmlFor="contactNo">Contact No</Label> 
+          <Input
+            type="text"
+            name="contactNo"
+            id="contactNo"
+            placeholder="Contact Number"
+            value={form.contactNo}
+            onChange={handleChange}
+            required
+          />
         </div>
 
         <div>
           <Label>Address</Label>
-          <TextArea placeholder="Enter address" />
+          <TextArea
+            name="address"
+            id="address"
+            placeholder="Address"
+            value={form.address}
+            onChange={(value: string) => setForm({ ...form, address: value })}
+            required
+          />
         </div>
                 
         <div>
           <DatePicker
             id="date-picker"
-            label="Date Picker Input"
+            label="Joined Date"
             placeholder="Select a date"
-            onChange={(dates, currentDateString) => {
-              // Handle your logic
-              console.log({ dates, currentDateString });
+            mode="single"
+            defaultDate={startDate} 
+            onChange={(dates: Date[], dateStr: string) => {
+              setForm({ ...form, joinedDate: dateStr }); // stores formatted date string
             }}
+
           />
         </div>
+        <button type="submit">Add Tenant</button>
+      </form>
+      {message && <p>{message}</p>}
 
-        <div>
-          <Label htmlFor="tm">Time Picker Input</Label>
-          <div className="relative">
-            <Input
-              type="time"
-              id="tm"
-              name="tm"
-              onChange={(e) => console.log(e.target.value)}
-            />
-            <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
-              <TimeIcon />
-            </span>
-          </div>
-        </div>
-        <div>
-          <Label htmlFor="tm">Input with Payment</Label>
-          <div className="relative">
-            <Input
-              type="text"
-              placeholder="Card number"
-              className="pl-[62px]"
-            />
-            <span className="absolute left-0 top-1/2 flex h-11 w-[46px] -translate-y-1/2 items-center justify-center border-r border-gray-200 dark:border-gray-800">
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <circle cx="6.25" cy="10" r="5.625" fill="#E80B26" />
-                <circle cx="13.75" cy="10" r="5.625" fill="#F59D31" />
-                <path
-                  d="M10 14.1924C11.1508 13.1625 11.875 11.6657 11.875 9.99979C11.875 8.33383 11.1508 6.8371 10 5.80713C8.84918 6.8371 8.125 8.33383 8.125 9.99979C8.125 11.6657 8.84918 13.1625 10 14.1924Z"
-                  fill="#FC6020"
-                />
-              </svg>
-            </span>
-          </div>
-        </div>
       </div>
     </ComponentCard>
   );
