@@ -4,6 +4,7 @@ const BuildingSchema = new mongoose.Schema({
   buildingId: { type: String, unique: true },  
   name: { type: String, required: true },
   location: { type: String, required: true },
+  isActive: { type: Boolean, default: true }
 }, { timestamps: true });
 
 BuildingSchema.pre("save", async function (next) {

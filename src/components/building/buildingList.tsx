@@ -23,9 +23,13 @@ const BuildingList: React.FC = () => {
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
 
-  // ===== HIGHLIGHTED: State for modal & selected building =====
+  // edit modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBuilding, setSelectedBuilding] = useState<Building | null>(null);
+
+  // Add modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newBuilding, setNewBuilding] = useState({ name: "", location: "" });
 
   const fetchBuildings = async () => {
     setLoading(true);
@@ -68,16 +72,40 @@ const BuildingList: React.FC = () => {
     }
   };
 
+  const handleAddBuilding = async () => {
+    try {
+      const res = await fetch(`/api/building`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newBuilding),
+      });
+
+      if (!res.ok) throw new Error("Failed to add building");
+
+      const created = await res.json();
+
+      setBuildings((prev) => [created, ...prev]); // add new to list
+      setIsAddModalOpen(false);
+      setNewBuilding({ name: "", location: "" });
+    } catch (err) {
+      console.error("Error adding building:", err);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Search input */}
-      <input
-        type="text"
-        placeholder="Search by Building Name or ID"
-        value={search}
-        onChange={handleSearchChange}
-        className="w-full max-w-sm rounded border px-4 py-2"
-      />
+      
+      {/* Top controls */}
+      <div className="flex items-center justify-between">
+        <input
+          type="text"
+          placeholder="Search by Building Name or ID"
+          value={search}
+          onChange={handleSearchChange}
+          className="w-full max-w-sm rounded border px-4 py-2 text-gray-900 dark:text-white"
+        />
+        <Button onClick={() => setIsAddModalOpen(true)}>+ Add Building</Button>
+      </div>
 
       {/* Table */}
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
@@ -108,18 +136,19 @@ const BuildingList: React.FC = () => {
                 ) : buildings.length > 0 ? (
                   buildings.map((b) => (
                     <TableRow key={b.buildingId}>
-                      <TableCell className="px-5 py-4 text-start">{b.buildingId}</TableCell>
-                      <TableCell className="px-4 py-3 text-start">{b.name}</TableCell>
-                      <TableCell className="px-4 py-3 text-start">{b.location}</TableCell>
-                      <TableCell className="px-4 py-3 text-start">
+                      <TableCell className="px-5 py-3 text-start text-gray-900 dark:text-white">{b.buildingId}</TableCell>
+                      <TableCell className="px-4 py-3 text-start text-gray-900 dark:text-white">{b.name}</TableCell>
+                      <TableCell className="px-4 py-3 text-start text-gray-900 dark:text-white">{b.location}</TableCell>
+                      <TableCell className="px-4 py-3 text-start text-gray-900 dark:text-white">
                         {new Date(b.createdAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-start">
+                      <TableCell className="px-4 py-3 text-start text-gray-900 dark:text-white">
                         {new Date(b.updatedAt).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="px-4 py-3 text-start">
+                      <TableCell className="px-4 py-3 text-start text-gray-900 dark:text-white">
                         <button
                           onClick={() => {
+                            console.log("Selected building:", b);
                             setSelectedBuilding(b);
                             setIsModalOpen(true);
                           }}
@@ -146,17 +175,17 @@ const BuildingList: React.FC = () => {
         <button
           onClick={() => setPage((p) => Math.max(p - 1, 1))}
           disabled={page === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="px-3 py-1 border rounded disabled:opacity-50 text-gray-900 dark:text-white"
         >
           Previous
         </button>
-        <span>
-          Page {page} of {totalPages}
+        <span  className = "text-gray-900 dark:text-white">
+          Page {page} of {totalPages}         
         </span>
         <button
           onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
           disabled={page === totalPages}
-          className="px-3 py-1 border rounded disabled:opacity-50"
+          className="px-3 py-1 border rounded disabled:opacity-50 text-gray-900 dark:text-white"
         >
           Next
         </button>
@@ -169,15 +198,15 @@ const BuildingList: React.FC = () => {
           className="max-w-[600px] m-4"
         >
           <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-            <h3 className="text-xl font-semibold mb-4">Edit Building</h3>
+            <h3 className="text-xl font-semibold mb-4 dark:text-white">Edit Building</h3>
             <div className="space-y-4">
               <div>
                 <Label>Building ID</Label>
-                <Input
-                  type="text"
-                  value={selectedBuilding.buildingId}
-                  disabled
-                />
+               <Input
+                type="text"
+                defaultValue={selectedBuilding.buildingId || ""} 
+                disabled
+              />
               </div>
               <div>
                 <Label>Name</Label>
@@ -209,6 +238,41 @@ const BuildingList: React.FC = () => {
           </div>
         </Modal>
       )}
+
+      {/* Add Modal */}
+      <Modal
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        className="max-w-[600px] m-4"
+      >
+        <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
+          <h3 className="text-xl font-semibold mb-4">Add New Building</h3>
+          <div className="space-y-4">
+            <div>
+              <Label>Name</Label>
+              <Input
+                type="text"
+                value={newBuilding.name}
+                onChange={(e) => setNewBuilding({ ...newBuilding, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Location</Label>
+              <Input
+                type="text"
+                value={newBuilding.location}
+                onChange={(e) => setNewBuilding({ ...newBuilding, location: e.target.value })}
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddBuilding}>Add Building</Button>
+          </div>
+        </div>
+      </Modal>
 
     </div>
   );

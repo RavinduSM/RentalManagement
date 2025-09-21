@@ -41,3 +41,32 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+export async function POST(req: Request) {
+  await dbConnect();
+
+  try {
+    const body = await req.json();
+
+    if (!body.name || !body.location) {
+      return NextResponse.json(
+        { error: "Name and location are required" },
+        { status: 400 }
+      );
+    }
+
+    // Create new building (buildingId will be auto-generated in schema)
+    const newBuilding = new Building({
+      name: body.name,
+      location: body.location,
+      isActive: true
+    });
+
+    await newBuilding.save();
+
+    return NextResponse.json(newBuilding, { status: 201 });
+  } catch (err) {
+    console.error("Error creating building:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
