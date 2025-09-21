@@ -15,8 +15,9 @@ export async function GET(req: Request) {
     const sortBy = searchParams.get("sortBy") || "createdAt";
     const sortOrder = searchParams.get("sortOrder") === "asc" ? 1 : -1;
 
-    // Build dynamic filter
-    const filter: Record<string, any> = {};
+    // Filter to only include active buildings
+    const filter: Record<string, any> = { isActive: true };
+
     if (id) filter.buildingId = { $regex: id, $options: "i" };
     if (name) filter.name = { $regex: name, $options: "i" };
 
@@ -67,6 +68,51 @@ export async function POST(req: Request) {
     return NextResponse.json(newBuilding, { status: 201 });
   } catch (err) {
     console.error("Error creating building:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req: Request) {
+  await dbConnect();
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id"); // can be _id or buildingId
+
+    if (!id) {
+      return NextResponse.json({ error: "ID is required" }, { status: 400 });
+    }
+
+    let deletedBuilding;
+
+    // Try finding by MongoDB _id first
+    if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      deletedBuilding = await Building.findByIdAndUpdate(
+        id,
+        { $set: { isActive: false } },
+        { new: true }
+      );
+    }
+
+    // If not found by _id, fall back to buildingId
+    if (!deletedBuilding) {
+      deletedBuilding = await Building.findOneAndUpdate(
+        { buildingId: id },
+        { $set: { isActive: false } },
+        { new: true }
+      );
+    }
+
+    if (!deletedBuilding) {
+      return NextResponse.json({ error: "Building not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      message: "Building deactivated successfully",
+      building: deletedBuilding,
+    });
+  } catch (err) {
+    console.error("Error deleting building:", err);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
