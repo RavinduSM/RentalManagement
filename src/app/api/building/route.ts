@@ -116,3 +116,38 @@ export async function DELETE(req: Request) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
+
+export async function PUT(req: Request) {
+  await dbConnect();
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get("id"); 
+
+    if (!id) {
+      return NextResponse.json({ error: "Building ID is required" }, { status: 400 });
+    }
+
+    const body = await req.json();
+    // Only allow updating these fields
+    const updateData: Partial<{ name: string; location: string; isActive: boolean }> = {};
+
+    if (body.name) updateData.name = body.name;
+    if (body.location) updateData.location = body.location;
+
+     const updatedBuilding = await Building.findByIdAndUpdate(
+      id,                 
+      { $set: updateData },
+      { new: true }
+    );
+
+    if (!updatedBuilding) {
+      return NextResponse.json({ error: "Building not found" }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedBuilding);
+  } catch (err) {
+    console.error("Error updating building:", err);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}

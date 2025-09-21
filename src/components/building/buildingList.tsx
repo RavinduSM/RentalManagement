@@ -163,7 +163,7 @@ const BuildingList: React.FC = () => {
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow>
-                    <TableCell className="text-center py-4" colSpan={6}>
+                    <TableCell className="text-center py-4 text-gray-900 dark:text-white">
                       Loading...
                     </TableCell>
                   </TableRow>
@@ -181,7 +181,7 @@ const BuildingList: React.FC = () => {
                           }}
                           className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
                         >
-                           <svg
+                          <svg
                             className="fill-current"
                             width="18"
                             height="18"
@@ -222,7 +222,7 @@ const BuildingList: React.FC = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell className="text-center py-4" colSpan={6}>
+                    <TableCell className="text-center py-4 text-gray-900 dark:text-white">
                       No buildings found.
                     </TableCell>
                   </TableRow>
@@ -258,7 +258,7 @@ const BuildingList: React.FC = () => {
       {selectedBuilding && (
         <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} className="max-w-[600px] m-4">
           <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-                <Input type="text" value={selectedBuilding.buildingId} disabled />
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit Building</h3>
             <div className="space-y-4">
               <div>
                 <Label>Building ID</Label>
@@ -268,7 +268,7 @@ const BuildingList: React.FC = () => {
                 <Label>Name</Label>
                 <Input
                   type="text"
-                  value={selectedBuilding.name}
+                  defaultValue={selectedBuilding.name}
                   onChange={(e) =>
                     setSelectedBuilding({ ...selectedBuilding, name: e.target.value })
                   }
@@ -278,7 +278,7 @@ const BuildingList: React.FC = () => {
                 <Label>Location</Label>
                 <Input
                   type="text"
-                  value={selectedBuilding.location}
+                  defaultValue={selectedBuilding.location}
                   onChange={(e) =>
                     setSelectedBuilding({ ...selectedBuilding, location: e.target.value })
                   }
@@ -296,35 +296,35 @@ const BuildingList: React.FC = () => {
       )}
 
       {/* Add Modal */}
-<Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} className="max-w-[600px] m-4">
-      <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-        <h3 className="text-xl font-semibold mb-4">Add New Building</h3>
-        <div className="space-y-4">
-          <div>
-            <Label>Name</Label>
-            <Input
-              type="text"
-              value={newBuilding.name}
-              onChange={(e) => setNewBuilding({ ...newBuilding, name: e.target.value })}
-            />
+      <Modal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} className="max-w-[600px] m-4">
+        <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
+          <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Add New Building</h3>
+          <div className="space-y-4">
+            <div>
+              <Label>Name</Label>
+              <Input
+                type="text"
+                value={newBuilding.name}
+                onChange={(e) => setNewBuilding({ ...newBuilding, name: e.target.value })}
+              />
+            </div>
+            <div>
+              <Label>Location</Label>
+              <Input
+                type="text"
+                value={newBuilding.location}
+                onChange={(e) => setNewBuilding({ ...newBuilding, location: e.target.value })}
+              />
+            </div>
           </div>
-          <div>
-            <Label>Location</Label>
-            <Input
-              type="text"
-              value={newBuilding.location}
-              onChange={(e) => setNewBuilding({ ...newBuilding, location: e.target.value })}
-            />
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleAddBuilding}>Add Building</Button>
           </div>
         </div>
-        <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleAddBuilding}>Add Building</Button>
-        </div>
-      </div>
-    </Modal>
+      </Modal>
       {/* Delete Confirmation Modal */}
       <Modal isOpen={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)} className="max-w-[400px] m-4">
         <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
@@ -342,8 +342,8 @@ const BuildingList: React.FC = () => {
           </div>
         </div>
       </Modal>
-</div >
-);
+    </div >
+  );
 };
 
 export default BuildingList;
