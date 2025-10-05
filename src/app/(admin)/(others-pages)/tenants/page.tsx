@@ -15,7 +15,7 @@ export default function FormElements() {
     <div>
       <PageBreadcrumb pageTitle="Tenant" />
         <div className="space-y-6">
-          <ComponentCard title="Basic Table 1">
+          <ComponentCard title="">
             <TenantList />
           </ComponentCard>
         </div>
