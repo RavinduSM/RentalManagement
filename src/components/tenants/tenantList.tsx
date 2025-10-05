@@ -12,6 +12,7 @@ import Input from "../form/input/InputField";
 
 interface Tenant {
   _id: string;
+  tenantId: string;
   fullName: string;
   callingName: string;
   nicNo: string;
@@ -151,7 +152,7 @@ const TenantList: React.FC = () => {
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
-                  {["Name", "NIC", "Contact", "Address", "Joined Date", "Status", "Actions"].map(
+                  {["Tenant ID", "Name", "NIC", "Contact", "Address", "Joined Date", "Status", "Actions"].map(
                     (header) => (
                       <TableCell 
                         key={header} 
@@ -174,6 +175,7 @@ const TenantList: React.FC = () => {
                 ) : tenants.length > 0 ? (
                   tenants.map((tenant) => (
                     <TableRow key={tenant._id}>
+                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.tenantId}</TableCell>
                       <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.fullName}</TableCell>
                       <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.nicNo}</TableCell>
                       <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.contactNo}</TableCell>
