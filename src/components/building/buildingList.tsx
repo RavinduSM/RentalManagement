@@ -6,6 +6,7 @@ import { Modal } from "../ui/modal";
 import Button from "../ui/button/Button";
 import Input from "../form/input/InputField";
 import Label from "../form/Label";
+import Pagination from "../tables/Pagination";
 
 interface Building {
   _id: string;
@@ -234,7 +235,7 @@ const BuildingList: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      <div className="flex justify-center items-center space-x-2">
+      {/* <div className="flex justify-center items-center space-x-2">
         <button
           onClick={() => setPage((p) => Math.max(p - 1, 1))}
           disabled={page === 1}
@@ -252,6 +253,10 @@ const BuildingList: React.FC = () => {
         >
           Next
         </button>
+      </div> */}
+
+      <div className="flex justify-center mt-4">
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>
 
       {/* Edit Modal */}

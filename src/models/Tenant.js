@@ -49,7 +49,7 @@ TenantSchema.pre("save", async function (next) {
   next();
 });
 
-// 🔹 Decrypt for API response
+// Decrypt for API response
 TenantSchema.methods.decryptData = function () {
   const decrypt = (ciphertext) => {
     if (!ciphertext) return "";
@@ -63,6 +63,7 @@ TenantSchema.methods.decryptData = function () {
   };
 
   return {
+    _id: this._id.toString(),
     tenantId: this.tenantId,
     fullName: this.fullName,
     callingName: this.callingName,
@@ -74,7 +75,41 @@ TenantSchema.methods.decryptData = function () {
   };
 };
 
-// 🔹 Enforce uniqueness at DB level
+TenantSchema.pre("findOneAndUpdate", function (next) {
+  let update = this.getUpdate();
+  if (!update) return next();
+
+  // Ensure $set exists
+  if (!update.$set) update.$set = {};
+
+  const data = update.$set;
+
+  // Encrypt and hash NIC
+  if (data.nicNo) {
+    data.nicNoHash = crypto.createHash("sha256").update(data.nicNo).digest("hex");
+    data.nicNo = CryptoJS.AES.encrypt(data.nicNo, SECRET_KEY).toString();
+  }
+
+  // Encrypt and hash Contact
+  if (data.contactNo) {
+    data.contactNoHash = crypto.createHash("sha256").update(data.contactNo).digest("hex");
+    data.contactNo = CryptoJS.AES.encrypt(data.contactNo, SECRET_KEY).toString();
+  }
+
+  // Encrypt Address
+  if (data.address) {
+    data.address = CryptoJS.AES.encrypt(data.address, SECRET_KEY).toString();
+  }
+
+  // Apply back
+  this.setUpdate(update);
+
+  next();
+});
+
+
+
+// Enforce uniqueness at DB level
 TenantSchema.index({ nicNoHash: 1 }, { unique: true });
 TenantSchema.index({ contactNoHash: 1 }, { unique: true });
 
