@@ -45,10 +45,16 @@ const navItems: NavItem[] = [
     path: "/tenants", 
   },
 
-   {
+  {
     name: "Building",
     icon: <ListIcon />,
     path: "/building", 
+  },
+
+   {
+    name: "Rooms",
+    icon: <ListIcon />,
+    path: "/room",
   },
 
   {
