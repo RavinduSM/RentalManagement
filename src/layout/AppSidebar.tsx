@@ -54,6 +54,10 @@ const navItems: NavItem[] = [
    {
     name: "Rooms",
     icon: <ListIcon />,
+     subItems: [
+      { name: "Rooms", path: "/room/room", pro: false },
+      { name: "Room Facilities", path: "/room/roomFacilities", pro: false },
+    ],
     path: "/room",
   },
 

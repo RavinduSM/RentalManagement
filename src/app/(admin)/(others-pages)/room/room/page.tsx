@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function FormElements() {
   return (
     <div>
-      <PageBreadcrumb pageTitle="Building" />
+      <PageBreadcrumb pageTitle="Room" />
         <div className="space-y-6">
           <ComponentCard title="">
             <RoomList />
