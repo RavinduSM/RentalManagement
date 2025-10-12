@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import Badge from "../ui/badge/Badge";
 import Image from "next/image";
@@ -10,60 +12,55 @@ import Pagination from "../../components/tables/Pagination";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
 
-interface Tenant {
+interface Room {
   _id: string;
-  tenantId: string;
-  fullName: string;
-  callingName: string;
-  nicNo: string;
-  contactNo: string;
-  address: string;
-  joinedDate: string;
-  role?: string;
-  image?: string;
-  isActive?: boolean | null;
+  roomId: String, 
+  buildingId: String, 
+  name: String,
+  description: String, 
+  isActive: Boolean | null, 
 }
 
-const TenantList: React.FC = () => {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+const roomList: React.FC = () => {
+  const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isActionModalOpen, setIsActionModalOpen] = useState(false);
   const [actionType, setActionType] = useState<"enable" | "disable">("disable");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [newTenant, setNewTenant] = useState({ fullName: "", callingName: "", nicNo: "", contactNo: "", address: "", joinedDate: "" });
+  const [newRoom, setNewRoom] = useState({ 
+    buildingId: "", 
+    name: "", 
+    description: "" ,
+    facilities: "",
+    basePrice: "",
+  });
 
-  const fetchTenants = async () => {
+  const fetchRooms = async () => {
     setLoading(true);
     try {
       const res = await fetch(
-        `/api/tenants?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`
+        `/api/room?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`
       );
       const data = await res.json();
-
-      // Ensure each tenant has a valid _id
-      const decryptedTenants = (data.data || []).map((t: any) => ({
-        ...t,
-        _id: t._id || t.tenantId || crypto.randomUUID(),
-      }));
-
-      setTenants(decryptedTenants);
+      console.log("Fetched rooms response:", data);
+      setRooms(data.data || []);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
-      console.error("Failed to fetch tenants:", err);
+      console.error("Failed to fetch rooms:", err);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchTenants();
+    fetchRooms();
   }, [page, search]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,84 +69,107 @@ const TenantList: React.FC = () => {
   };
 
   // Add Tenant
-  const handleAddTenant = async () => {
+ const handleAddRoom = async () => {
     try {
-      const res = await fetch(`/api/tenants`, {
+      const payload = {
+        ...newRoom,
+        facilities: newRoom.facilities
+          ? newRoom.facilities.split(",").map((f) => f.trim())
+          : [],
+        basePrice: Number(newRoom.basePrice) || 0,
+      };
+
+      const res = await fetch("/api/room", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newTenant),
+        body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Failed to add building");
 
-      fetchTenants(); // re-fetch after adding
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to add room");
+      }
+
+      toast.success("Room added successfully");
       setIsAddModalOpen(false);
-      setNewTenant({ fullName: "", callingName: "", nicNo: "", contactNo: "", address: "", joinedDate: "" });
-    } catch (err) {
-      console.error("Error adding building:", err);
+      setNewRoom({ buildingId: "", name: "", description: "", facilities: "", basePrice: "" });
+      fetchRooms();
+    } catch (err: any) {
+      console.error("Error adding room:", err);
+      toast.error(err.message || "Something went wrong");
     }
   };
 
 
-  const handleActionClick = (tenant: Tenant, action: "enable" | "disable") => {
-    if (!tenant._id) {
-      console.error("Tenant missing _id:", tenant);
+
+
+  const handleActionClick = (room: Room, action: "enable" | "disable") => {
+    if (!room._id) {
+      console.error("Room missing _id:", room);
       return;
     }
-    setSelectedTenant(tenant);
+    setSelectedRoom(room);
     setActionType(action);
     setIsActionModalOpen(true);
   };
 
   const handlePerformAction = async () => {
-    if (!selectedTenant?._id) return;
+    if (!selectedRoom?._id) return;
     try {
-      const res = await fetch(`/api/tenants?id=${selectedTenant._id}&action=${actionType}`, {
+      const res = await fetch(`/api/room?id=${selectedRoom._id}&action=${actionType}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
       });
       if (!res.ok) throw new Error("Failed to update tenant");
       setIsActionModalOpen(false);
-      setSelectedTenant(null);
-      fetchTenants();
+      setSelectedRoom(null);
+      fetchRooms();
     } catch (err) {
       console.error(err);
     }
   };
 
-  const handleEditClick = (tenant: Tenant) => {
-    if (!tenant._id) {
-      console.error("Tenant missing _id:", tenant);
+  const handleEditClick = (room: Room) => {
+    if (!room._id) {
+      console.error("Room missing _id:", room);
       return;
     }
-    setSelectedTenant(tenant);
+    setSelectedRoom(room);
     setIsEditModalOpen(true);
   };
 
-  const handleEditSubmit = async (updatedTenant: Partial<Tenant>) => {
-  if (!selectedTenant?._id) return;
+  const handleEditSubmit = async (updatedRoom: any) => {
+    if (!selectedRoom?._id) return;
 
-  const editableTenant = {
-    fullName: updatedTenant.fullName,
-    callingName: updatedTenant.callingName,
-    nicNo: updatedTenant.nicNo,
-    contactNo: updatedTenant.contactNo,
-    address: updatedTenant.address,
+    const payload = {
+      buildingId: updatedRoom.buildingId,
+      name: updatedRoom.name,
+      description: updatedRoom.description,
+      facilities: updatedRoom.facilities
+        ? updatedRoom.facilities.split(",").map((f: string) => f.trim())
+        : [],
+      newPrice: Number(updatedRoom.newPrice) || undefined,
+    };
+
+    try {
+      const res = await fetch(`/api/room?id=${selectedRoom._id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error("Failed to edit room");
+
+      toast.success("Room updated successfully");
+      setIsEditModalOpen(false);
+      setSelectedRoom(null);
+      fetchRooms();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Error updating room");
+    }
   };
 
-  try {
-    const res = await fetch(`/api/tenants?id=${selectedTenant._id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editableTenant),
-    });
-    if (!res.ok) throw new Error("Failed to edit tenant");
-    setIsEditModalOpen(false);
-    setSelectedTenant(null);
-    fetchTenants();
-  } catch (err) {
-    console.error(err);
-  }
-};
 
 
   return (
@@ -173,7 +193,7 @@ const TenantList: React.FC = () => {
             <Table>
               <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
                 <TableRow>
-                  {["Tenant ID", "Name", "NIC", "Contact", "Address", "Joined Date", "Status", "Actions"].map(
+                  {["Room ID", "Building Id", "name", "description", "Status", "Actions"].map(
                     (header) => (
                       <TableCell 
                         key={header} 
@@ -189,36 +209,34 @@ const TenantList: React.FC = () => {
               <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
                 {loading ? (
                   <TableRow key="loading">
-                    <TableCell colSpan={7} className="text-center py-4 text-gray-900 dark:text-white">>
+                    <TableCell colSpan={7} className="text-center py-4 text-gray-900 dark:text-white">
                       Loading...
                     </TableCell>
                   </TableRow>
-                ) : tenants.length > 0 ? (
-                  tenants.map((tenant) => (
-                    <TableRow key={tenant._id}>
-                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.tenantId}</TableCell>
-                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.fullName}</TableCell>
-                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.nicNo}</TableCell>
-                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.contactNo}</TableCell>
-                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{tenant.address}</TableCell>
-                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{new Date(tenant.joinedDate).toLocaleDateString()}</TableCell>
+                ) : rooms.length > 0 ? (
+                  rooms.map((room) => (
+                    <TableRow key={room._id}>
+                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{room.roomId}</TableCell>
+                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{room.buildingId}</TableCell>
+                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{room.name}</TableCell>
+                      <TableCell className="px-5 py-3 text-gray-900 dark:text-white">{room.description}</TableCell>
                       <TableCell className="px-4 py-3 ">
                         <Badge
                           color={
-                            tenant.isActive === true
+                            room.isActive === true
                               ? "success"
-                              : tenant.isActive === false
+                              : room.isActive === false
                               ? "warning"
                               : "error"
                           }
                         >
-                          {tenant.isActive ? "Active" : "Inactive"}
+                          {room.isActive ? "Active" : "Inactive"}
                         </Badge>
                       </TableCell>
                       <TableCell className="flex gap-2">
                         {/* Edit Button */}
                         <button
-                          onClick={() => handleEditClick(tenant)}
+                          onClick={() => handleEditClick(room)}
                           className="flex w-full items-center justify-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 hover:text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-white/[0.03] dark:hover:text-gray-200 lg:inline-flex lg:w-auto"
                         >
                           <svg
@@ -241,17 +259,17 @@ const TenantList: React.FC = () => {
                        {/* Enable/Disable Button */}
                         <button
                           onClick={() =>
-                            tenant.isActive
-                              ? handleActionClick(tenant, "disable")
-                              : handleActionClick(tenant, "enable")
+                            room.isActive
+                              ? handleActionClick(room, "disable")
+                              : handleActionClick(room, "enable")
                           }
                           className={`flex w-full items-center justify-center gap-2 rounded-full border px-4 py-3 text-sm font-medium shadow-theme-xs lg:inline-flex lg:w-auto ${
-                            tenant.isActive
+                            room.isActive
                               ? "border-gray-300 text-red-500 hover:bg-red-50 hover:text-red-600 dark:border-gray-700 dark:text-red-400 dark:hover:bg-white/[0.03] dark:hover:text-red-300"
                               : "border-gray-300 text-green-500 hover:bg-green-50 hover:text-green-600 dark:border-gray-700 dark:text-green-400 dark:hover:bg-white/[0.03] dark:hover:text-green-300"
                           }`}
                         >
-                          {tenant.isActive ? "Disable" : "Enable"}
+                          {room.isActive ? "Disable" : "Enable"}
                         </button>
                       </TableCell>
                     </TableRow>
@@ -259,7 +277,7 @@ const TenantList: React.FC = () => {
                 ) : (
                   <TableRow key="no-data">
                     <TableCell colSpan={7} className="text-center py-4">
-                      No tenants found.
+                      No rooms found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -282,61 +300,51 @@ const TenantList: React.FC = () => {
         >
           <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
             <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
-              Add New Tenant
+              + Add New Room
             </h3>
 
             <div className="space-y-4">
               <div>
-                <Label>Full Name</Label>
+                <Label>Building ID</Label>
                 <Input
                   type="text"
-                  value={newTenant.fullName}
-                  onChange={(e) => setNewTenant({ ...newTenant, fullName: e.target.value })}
+                  value={newRoom.buildingId}
+                  onChange={(e) => setNewRoom({ ...newRoom, buildingId: e.target.value })}
                 />
               </div>
 
               <div>
-                <Label>Calling Name</Label>
+                <Label>Room Name</Label>
                 <Input
                   type="text"
-                  value={newTenant.callingName}
-                  onChange={(e) => setNewTenant({ ...newTenant, callingName: e.target.value })}
+                  value={newRoom.name}
+                  onChange={(e) => setNewRoom({ ...newRoom, name: e.target.value })}
                 />
               </div>
 
               <div>
-                <Label>NIC No</Label>
+                <Label>Description</Label>
                 <Input
                   type="text"
-                  value={newTenant.nicNo}
-                  onChange={(e) => setNewTenant({ ...newTenant, nicNo: e.target.value })}
+                  value={newRoom.description}
+                  onChange={(e) => setNewRoom({ ...newRoom, description: e.target.value })}
                 />
               </div>
-
               <div>
-                <Label>Contact No</Label>
-                <Input
-                  type="tel"
-                  value={newTenant.contactNo}
-                  onChange={(e) => setNewTenant({ ...newTenant, contactNo: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <Label>Address</Label>
+                <Label>Facilities (comma-separated)</Label>
                 <Input
                   type="text"
-                  value={newTenant.address}
-                  onChange={(e) => setNewTenant({ ...newTenant, address: e.target.value })}
+                  value={newRoom.facilities}
+                  onChange={(e) => setNewRoom({ ...newRoom, facilities: e.target.value })}
                 />
               </div>
 
               <div>
-                <Label>Joined Date</Label>
+                <Label>Base Price</Label>
                 <Input
-                  type="date"
-                  value={newTenant.joinedDate}
-                  onChange={(e) => setNewTenant({ ...newTenant, joinedDate: e.target.value })}
+                  type="number"
+                  value={newRoom.basePrice}
+                  onChange={(e) => setNewRoom({ ...newRoom, basePrice: e.target.value })}
                 />
               </div>
             </div>
@@ -346,10 +354,10 @@ const TenantList: React.FC = () => {
                 Cancel
               </Button>
               <Button
-                onClick={handleAddTenant}
-                disabled={!newTenant.fullName || !newTenant.nicNo}
+                onClick={handleAddRoom}
+                disabled={!newRoom.name}
               >
-                Add Tenant
+                Add Room
               </Button>
             </div>
           </div>
@@ -361,17 +369,17 @@ const TenantList: React.FC = () => {
         isOpen={isActionModalOpen}
         onClose={() => {
           setIsActionModalOpen(false);
-          setSelectedTenant(null);
+          setSelectedRoom(null);
         }}
         className="max-w-[600px] m-4"
       >
         <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
           <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
-            {actionType === "disable" ? "Disable Tenant" : "Enable Tenant"}
+            {actionType === "disable" ? "Disable Room" : "Enable Room"}
           </h3>
           <p className="mb-6 text-gray-900 dark:text-white">
             Are you sure you want to {actionType}{" "}
-            <span className="font-bold">{selectedTenant?.fullName}</span>?
+            <span className="font-bold">{selectedRoom?.name}</span>?
           </p>
           <div className="flex justify-end gap-2 mt-6">
             <Button variant="outline" onClick={() => setIsActionModalOpen(false)}
@@ -389,66 +397,69 @@ const TenantList: React.FC = () => {
       </Modal>
 
       {/* Edit Modal */}
-      {selectedTenant && (
+      {selectedRoom && (
         <Modal
           isOpen={isEditModalOpen}
           onClose={() => {
             setIsEditModalOpen(false);
-            setSelectedTenant(null);
+            setSelectedRoom(null);
           }}
           className="max-w-[600px] m-4"
         >
           <div className="p-6 bg-white dark:bg-gray-900 rounded-2xl">
-            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit Tenant</h3>
+            <h3 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">Edit Room</h3>
             <div className="space-y-4">
             <div>
-              <Label>Full Name</Label>
+              <Label>Building Id</Label>
               <Input
                 type="text"
-                placeholder="Full Name"
-                defaultValue={selectedTenant?.fullName || ""}
+                defaultValue={selectedRoom?.buildingId || ""}
                 onChange={(e) =>
-                  setSelectedTenant({ ...selectedTenant, fullName: e.target.value })
+                  setSelectedRoom({ ...selectedRoom, buildingId: e.target.value })
                 }
               />
             </div>
             <div>
-              <Label>Calling Name</Label>
+              <Label>Room Name</Label>
               <Input
                 type="text"
-                defaultValue={selectedTenant?.callingName || ""}
+                placeholder="Room Name"
+                defaultValue={selectedRoom?.name || ""}
                 onChange={(e) =>
-                  setSelectedTenant( { ...selectedTenant, callingName: e.target.value })
+                  setSelectedRoom({ ...selectedRoom, name: e.target.value })
                 }
               />
             </div>
             <div>
-              <Label>NIC</Label>
+              <Label>Description</Label>
               <Input
                 type="text"
-                defaultValue={selectedTenant?.nicNo || ""}
+                defaultValue={selectedRoom?.description || ""}
                 onChange={(e) =>
-                  setSelectedTenant({ ...selectedTenant, nicNo: e.target.value })
+                  setSelectedRoom({ ...selectedRoom, description: e.target.value })
                 }
               />
             </div>
             <div>
-              <Label>Contact Number</Label>
+              <Label>Facilities (comma-separated)</Label>
               <Input
                 type="text"
-                defaultValue={selectedTenant?.contactNo || ""}
+                placeholder="WiFi, AC, TV"
+                value={selectedRoom?.facilities || ""}
                 onChange={(e) =>
-                  setSelectedTenant({ ...selectedTenant, contactNo: e.target.value })
+                  setSelectedRoom({ ...selectedRoom, facilities: e.target.value })
                 }
               />
             </div>
+
             <div>
-              <Label>Address</Label>
+              <Label>New Price</Label>
               <Input
-                type="text"
-                defaultValue={selectedTenant?.address || ""}
+                type="number"
+                placeholder="Enter new price"
+                value={selectedRoom?.newPrice || ""}
                 onChange={(e) =>
-                  setSelectedTenant({ ...selectedTenant, address: e.target.value })
+                  setSelectedRoom({ ...selectedRoom, newPrice: e.target.value })
                 }
               />
             </div>
@@ -457,16 +468,16 @@ const TenantList: React.FC = () => {
               <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="destructive" onClick={() => selectedTenant && handleEditSubmit(selectedTenant)}>
+              <Button variant="destructive" onClick={() => selectedRoom && handleEditSubmit(selectedRoom)}>
                 Save
               </Button>
             </div>
             </div>
           </div>
         </Modal>
-      )}
+      )} 
     </div>
   );
 };
 
-export default TenantList;
+export default roomList;
