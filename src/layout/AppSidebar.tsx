@@ -62,6 +62,12 @@ const navItems: NavItem[] = [
   },
 
   {
+    name: "Meter",
+    icon: <ListIcon />,
+    path: "/meter", 
+  },
+
+  {
     name: "Forms",
     icon: <ListIcon />,
     subItems: [{ name: "Form Elements", path: "/form-elements", pro: false }],
