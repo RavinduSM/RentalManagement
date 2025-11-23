@@ -5,7 +5,6 @@ import DataTable from "@/components/common/Table";
 import AddModal from "@/components/common/AddModal";
 import EditModal from "@/components/common/EditModal";
 import DeleteModal from "@/components/common/DeleteModal";
-import Button from "@/components/ui/button/Button";
 import Badge from "@/components/ui/badge/Badge";
 import TableActionButtons from "../form/form-elements/TableActionButtons";
 
@@ -156,13 +155,13 @@ export default function TenantPage() {
           setFormData({});
           setIsAddOpen(true);
         }}
-        addLabel="Add Tenant"
+        addLabel="+ Add Tenant"
       />
 
 
       <AddModal<Tenant>
         isOpen={isAddOpen}
-        title="Add Tenant"
+        title="Add Tenant2"
         entityName="Tenant"
         fields={fields}
         data={formData}
