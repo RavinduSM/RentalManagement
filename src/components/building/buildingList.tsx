@@ -235,26 +235,6 @@ const BuildingList: React.FC = () => {
       </div>
 
       {/* Pagination */}
-      {/* <div className="flex justify-center items-center space-x-2">
-        <button
-          onClick={() => setPage((p) => Math.max(p - 1, 1))}
-          disabled={page === 1}
-          className="px-3 py-1 border rounded disabled:opacity-50 text-gray-900 dark:text-white"
-        >
-          Previous
-        </button>
-        <span className="text-gray-900 dark:text-white">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-          disabled={page === totalPages}
-          className="px-3 py-1 border rounded disabled:opacity-50 text-gray-900 dark:text-white"
-        >
-          Next
-        </button>
-      </div> */}
-
       <div className="flex justify-center mt-4">
         <Pagination currentPage={page} totalPages={totalPages} onPageChange={setPage} />
       </div>

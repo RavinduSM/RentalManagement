@@ -1,8 +1,9 @@
 "use client";
 
 import React from "react";
-import Pagination from "@/components/common/Pagination";
 import { TableBody } from "../ui/table";
+import Pagination from "../tables/Pagination";
+import { on } from "events";
 
 interface Column<T> {
   key: keyof T | string;
@@ -104,19 +105,13 @@ export default function Table<T>({
         </table>
       </div>
 
-      {console.log("Pagination debug:", page, totalPages)}
+      {console.log("Pagination debug:", page, totalPages, onPageChange)}
 
       {/* Pagination */}
-      <div className="flex flex-col md:flex-row justify-between items-center mt-4 gap-2">
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          Page {page} of {totalPages}
-        </span>
-        <Pagination
-          currentPage={page}
-          totalPages={totalPages}
-          onPageChange={onPageChange || (() => {})}
-        />
+      <div className="flex justify-center mt-4">
+        <Pagination currentPage={page} totalPages={totalPages} onPageChange={onPageChange} />
       </div>
+
     </div>
   );
 }

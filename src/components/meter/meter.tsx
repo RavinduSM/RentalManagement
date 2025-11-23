@@ -7,6 +7,7 @@ import EditModal from "@/components/common/EditModal";
 import DeleteModal from "@/components/common/DeleteModal";
 import Badge from "@/components/ui/badge/Badge";
 import TableActionButtons from "../form/form-elements/TableActionButtons";
+import Pagination from "../common/Pagination";
 
 interface Tenant {
   _id: string;
@@ -157,7 +158,6 @@ export default function TenantPage() {
         }}
         addLabel="+ Add Tenant"
       />
-
 
       <AddModal<Tenant>
         isOpen={isAddOpen}
