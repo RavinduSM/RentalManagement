@@ -7,29 +7,25 @@ import EditModal from "@/components/common/EditModal";
 import DeleteModal from "@/components/common/DeleteModal";
 import Badge from "@/components/ui/badge/Badge";
 import TableActionButtons from "../form/form-elements/TableActionButtons";
-import Pagination from "../common/Pagination";
 
-interface Tenant {
+interface Meter {
   _id: string;
-  tenantId: string;
-  fullName: string;
-  callingName: string;
-  nicNo: string;
-  contactNo: string;
-  address: string;
-  joinedDate: string;
-  isActive?: boolean;
+  mainMeterId: string;
+  meterType: string;
+  meterNo: string;
+  installedAt: Date;
+  isActive: boolean;  
 }
 
 export default function TenantPage() {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [meters, setMeters] = useState<Meter[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  const [formData, setFormData] = useState<Partial<Tenant>>({});
-  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [formData, setFormData] = useState<Partial<Meter>>({});
+  const [selectedMeter, setSelectedMeter] = useState<Meter | null>(null);
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -39,9 +35,9 @@ export default function TenantPage() {
     setLoading(true);
     try {
       const pageSize = 10; // or make this configurable later
-      const res = await fetch(`/api/tenants?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`);
+      const res = await fetch(`/api/meter/mainMeter?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`);
       const data = await res.json();
-      setTenants(data.data || []);
+      setMeters(data.data || []);
       setTotalPages(data.pagination?.totalPages || 1);
     } catch (err) {
       console.error(err);
@@ -59,7 +55,7 @@ export default function TenantPage() {
   }, [search]);
 
   const handleAdd = async () => {
-    await fetch("/api/tenants", {
+    await fetch("/api/meter/mainMeter", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
@@ -70,82 +66,79 @@ export default function TenantPage() {
   };
 
   const handleEdit = async () => {
-    if (!selectedTenant?._id) return;
-    await fetch(`/api/tenants?id=${selectedTenant._id}`, {
+    if (!selectedMeter?._id) return;
+    await fetch(`/api/meter/mainMeter?id=${selectedMeter._id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
     });
     setIsEditOpen(false);
-    setSelectedTenant(null);
+    setSelectedMeter(null);
     setFormData({});
     fetchTenants();
   };
 
   const handleDelete = async () => {
-    if (!selectedTenant?._id) return;
-    await fetch(`/api/tenants?id=${selectedTenant._id}`, { method: "DELETE" });
+    if (!selectedMeter?._id) return;
+    await fetch(`/api/meter/mainMeter?id=${selectedMeter._id}`, { method: "DELETE" });
     setIsDeleteOpen(false);
-    setSelectedTenant(null);
+    setSelectedMeter(null);
     fetchTenants();
   };
 
-  const openEditModal = (tenant: Tenant) => {
-    setSelectedTenant(tenant);
-    setFormData({ ...tenant });
+  const openEditModal = (meter: Meter) => {
+    setSelectedMeter(meter);
+    setFormData({ ...meter });
     setIsEditOpen(true);
   };
 
   const columns = [
-    { key: "tenantId", label: "Tenant ID" },
-    { key: "fullName", label: "Full Name" },
-    { key: "nicNo", label: "NIC" },
-    { key: "contactNo", label: "Contact" },
-    { key: "address", label: "Address" },
+    { key: "mainMeterId", label: "Main Meter ID" },
+    { key: "meterType", label: "Meter Type" },
+    { key: "meterNo", label: "Meter No" },
     {
-      key: "joinedDate",
-      label: "Joined Date",
-      render: (t: Tenant) => new Date(t.joinedDate).toLocaleDateString(),
+      key: "installedAt",
+      label: "Installed At",
+      render: (m: Meter) => new Date(m.installedAt).toLocaleDateString(),
     },
     {
       key: "isActive",
       label: "Status",
-      render: (t: Tenant) => (
-        <Badge color={t.isActive ? "success" : "warning"}>
-          {t.isActive ? "Active" : "Inactive"}
+      render: (m: Meter) => (
+        <Badge color={m.isActive ? "success" : "warning"}>
+          {m.isActive ? "Active" : "Inactive"}
         </Badge>
       ),
     },
     {
       key: "actions",
       label: "Actions",
-      render: (t: Tenant) => (
+      render: (m: Meter) => (
         <TableActionButtons
-          onEdit={() => openEditModal(t)}
+          onEdit={() => openEditModal(m)}
           onDelete={() => {
-            setSelectedTenant(t);
+            setSelectedMeter(m);
             setIsDeleteOpen(true);
           }}
-          showToggle={false} // disable toggle for now
+          showToggle={false}
         />
       ),
     },
   ];
 
+
   const fields = [
-    { key: "fullName", label: "Full Name", required: true },
-    { key: "callingName", label: "Calling Name" },
-    { key: "nicNo", label: "NIC No" },
-    { key: "contactNo", label: "Contact No" },
-    { key: "address", label: "Address" },
-    { key: "joinedDate", label: "Joined Date", type: "date" },
+    { key: "mainMeterId", label: "Main Meter ID", required: true },
+    { key: "meterType", label: "Meter Type" },
+    { key: "meterNo", label: "Meter Number" },
+    { key: "installedAt", label: "Installed At", type: "date" },
   ];
 
   return (
     <>
       <DataTable
         columns={columns}
-        data={tenants}
+        data={meters}
         loading={loading}
         search={search}
         onSearchChange={setSearch}
@@ -159,10 +152,10 @@ export default function TenantPage() {
         addLabel="+ Add Tenant"
       />
 
-      <AddModal<Tenant>
+      <AddModal<Meter>
         isOpen={isAddOpen}
-        title="Add Tenant2"
-        entityName="Tenant"
+        title="Add Meter"
+        entityName="Meter"
         fields={fields}
         data={formData}
         onChange={setFormData}
@@ -170,17 +163,17 @@ export default function TenantPage() {
         onClose={() => setIsAddOpen(false)}
       />
 
-      <EditModal<Tenant>
+      <EditModal<Meter>
         isOpen={isEditOpen}
-        title="Edit Tenant"
-        entityName="Tenant"
+        title="Edit Meter"
+        entityName="Meter"
         fields={fields}
         data={formData}
         onChange={setFormData}
         onSubmit={handleEdit}
         onClose={() => {
           setIsEditOpen(false);
-          setSelectedTenant(null);
+          setSelectedMeter(null);
           setFormData({});
         }}
       />
@@ -191,7 +184,7 @@ export default function TenantPage() {
         onConfirm={handleDelete}
         onClose={() => {
           setIsDeleteOpen(false);
-          setSelectedTenant(null);
+          setSelectedMeter(null);
         }}
       />
     </>
