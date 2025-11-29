@@ -5,12 +5,20 @@ import { Modal } from "@/components/ui/modal";
 import Label from "@/components/form/Label";
 import Input from "@/components/form/input/NewInputField";
 import Button from "@/components/ui/button/Button";
+import SelectInput from "../form/form-elements/SelectInputs";
+import { ChevronDownIcon } from "@/icons";
+
+interface FieldOption {
+  value: string | number;
+  label: string;
+}
 
 interface FieldConfig {
   key: string;
   label: string;
   type?: string;
   required?: boolean;
+  options?: FieldOption[];
 }
 
 interface EditModalProps<T> {
@@ -38,7 +46,7 @@ export default function EditModal<T>({
 
   useEffect(() => {
     if (isOpen) {
-      console.log("Modal opened, incoming data:", data);
+      //console.log("Modal opened, incoming data:", data);
       setLocalData(data);
     }
   }, [isOpen, data]);
@@ -57,16 +65,34 @@ export default function EditModal<T>({
         </h3>
 
         <div className="space-y-4">
-          {fields.map(({ key, label, type = "text", required }) => (
+           {fields.map(({ key, label, type = "text", required, options }) => (
             <div key={key}>
               <Label>
                 {label} {required && <span className="text-red-500">*</span>}
               </Label>
-              <Input
-                type={type}
-                value={(localData as any)[key] ?? ""}
-                onChange={(e) => handleChange(key, e.target.value)}
-              />
+              {type === "select" ? (
+                <div className="relative">
+                  <SelectInput
+                    options={options || []}
+                    placeholder="Select..."
+                    value={(localData as any)[key] || ""}
+                    onChange={(value: string) => handleChange(key, value)}
+                    className="w-full dark:bg-dark-900"
+                  />
+
+                  {/* dropdown icon */}
+                  <span className="absolute text-gray-500 -translate-y-1/2 pointer-events-none right-3 top-1/2 dark:text-gray-400">
+                    <ChevronDownIcon />
+                  </span>
+                </div>
+              ) : (
+                // ⭐ DEFAULT INPUT
+                <Input
+                  type={type}
+                  value={(localData as any)[key] ?? ""}
+                  onChange={(e) => handleChange(key, e.target.value)}
+                />
+              )}
             </div>
           ))}
         </div>

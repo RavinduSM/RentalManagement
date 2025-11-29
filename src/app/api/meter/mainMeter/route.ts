@@ -5,23 +5,46 @@ import MainMeter from "@/models/mainMeterModel";
 // Fetch all facilities (with pagination + search)
 export async function GET(req: Request) {
   await dbConnect();
+
   const { searchParams } = new URL(req.url);
   const page = Number(searchParams.get("page")) || 1;
   const pageSize = Number(searchParams.get("pageSize")) || 10;
   const search = searchParams.get("search") || "";
 
-  const query: any = {isActive: true};
-  if (search) query.name = { $regex: search, $options: "i" };
+  const query: any = { isActive: true };
 
+  // If you want search to apply to meterNo or meterType
+  if (search) {
+    query.$or = [
+      { meterNo: { $regex: search, $options: "i" } },
+      { meterType: { $regex: search, $options: "i" } }
+    ];
+  }
+
+  // Get count for pagination
   const total = await MainMeter.countDocuments(query);
-  const mainMeter = await MainMeter.find(query)
+
+  // Fetch meters + populate building name
+  const meters = await MainMeter.find(query)
+    .populate({
+      path: "buildingId",
+      select: "name buildingId location",
+    })
     .sort({ createdAt: -1 })
     .skip((page - 1) * pageSize)
     .limit(pageSize)
     .lean();
 
+  // Flatten building name
+  const formatted = meters.map((item) => ({
+    ...item,
+    buildingName: item.buildingId?.name || null,
+    buildingCustomId: item.buildingId?.buildingId || null,
+    buildingLocation: item.buildingId?.location || null,
+  }));
+
   return NextResponse.json({
-    data: mainMeter,
+    data: formatted,
     pagination: {
       total,
       totalPages: Math.ceil(total / pageSize),

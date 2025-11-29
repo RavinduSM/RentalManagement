@@ -12,7 +12,8 @@ interface Meter {
   _id: string;
   mainMeterId: string;
   meterType: string;
-  meterNo: string;
+  meterNo: string;    
+  buildingId: string | { _id: string; name: string; buildingId: string };
   installedAt: Date;
   isActive: boolean;  
 }
@@ -24,6 +25,8 @@ export default function TenantPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
+  const [buildings, setBuildings] = useState<any[]>([]);
+
   const [formData, setFormData] = useState<Partial<Meter>>({});
   const [selectedMeter, setSelectedMeter] = useState<Meter | null>(null);
 
@@ -31,11 +34,18 @@ export default function TenantPage() {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  const fetchTenants = async () => {
+  const fetchMeters = async () => {
     setLoading(true);
     try {
       const pageSize = 10; // or make this configurable later
       const res = await fetch(`/api/meter/mainMeter?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(search)}`);
+
+      if (!res.ok) {
+        const text = await res.text(); // show what the server returned
+        console.error("API ERROR:", res.status, text);
+        throw new Error("Failed to fetch meter data");
+      }
+
       const data = await res.json();
       setMeters(data.data || []);
       setTotalPages(data.pagination?.totalPages || 1);
@@ -47,12 +57,24 @@ export default function TenantPage() {
   };
 
   useEffect(() => {
-    fetchTenants();
+    fetchMeters();
   }, [page, search]);
 
   useEffect(() => {
     setPage(1);
   }, [search]);
+
+  const fetchBuildings = async () => {
+  const res = await fetch("/api/building"); 
+  const data = await res.json();
+  setBuildings(data.buildings || []);
+};
+
+console.log("buildings", buildings)
+
+  useEffect(() => {
+    fetchBuildings();
+  }, []);
 
   const handleAdd = async () => {
     await fetch("/api/meter/mainMeter", {
@@ -62,7 +84,7 @@ export default function TenantPage() {
     });
     setIsAddOpen(false);
     setFormData({});
-    fetchTenants();
+    fetchMeters();
   };
 
   const handleEdit = async () => {
@@ -75,7 +97,7 @@ export default function TenantPage() {
     setIsEditOpen(false);
     setSelectedMeter(null);
     setFormData({});
-    fetchTenants();
+    fetchMeters();
   };
 
   const handleDelete = async () => {
@@ -83,19 +105,28 @@ export default function TenantPage() {
     await fetch(`/api/meter/mainMeter?id=${selectedMeter._id}`, { method: "DELETE" });
     setIsDeleteOpen(false);
     setSelectedMeter(null);
-    fetchTenants();
+    fetchMeters();
   };
 
   const openEditModal = (meter: Meter) => {
-    setSelectedMeter(meter);
-    setFormData({ ...meter });
-    setIsEditOpen(true);
-  };
+  setSelectedMeter(meter);
+
+  setFormData({
+    ...meter,
+    buildingId:
+      typeof meter.buildingId === "object"
+        ? meter.buildingId._id  
+        : meter.buildingId,
+  });
+
+  setIsEditOpen(true);
+};
 
   const columns = [
     { key: "mainMeterId", label: "Main Meter ID" },
     { key: "meterType", label: "Meter Type" },
     { key: "meterNo", label: "Meter No" },
+    { key: "buildingCustomId", label: "Building ID" },
     {
       key: "installedAt",
       label: "Installed At",
@@ -131,6 +162,16 @@ export default function TenantPage() {
     { key: "mainMeterId", label: "Main Meter ID", required: true },
     { key: "meterType", label: "Meter Type" },
     { key: "meterNo", label: "Meter Number" },
+    {
+      key: "buildingId",
+      label: "Building",
+      type: "select",
+      options: buildings.map((b) => ({
+        value: b._id,
+        label: `${b.buildingId} - ${b.name}`,
+      })),
+    },
+
     { key: "installedAt", label: "Installed At", type: "date" },
   ];
 
