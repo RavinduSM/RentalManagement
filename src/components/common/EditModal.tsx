@@ -75,7 +75,7 @@ export default function EditModal<T>({
                   <SelectInput
                     options={options || []}
                     placeholder="Select..."
-                    value={(localData as any)[key] || ""}
+                    value={(localData as any)[key] ?? ""}
                     onChange={(value: string) => handleChange(key, value)}
                     className="w-full dark:bg-dark-900"
                   />

@@ -160,7 +160,21 @@ console.log("buildings", buildings)
 
   const fields = [
     { key: "mainMeterId", label: "Main Meter ID", required: true },
-    { key: "meterType", label: "Meter Type" },
+    {
+      key: "meterType",
+      label: "Meter Type",
+      type: "select",
+      options: [
+        {
+          value: "Electricity",
+          label: "Electricity",
+        },
+        {
+          value: "Water",
+          label: "Water",
+        },
+      ],
+    },
     { key: "meterNo", label: "Meter Number" },
     {
       key: "buildingId",
@@ -190,7 +204,7 @@ console.log("buildings", buildings)
           setFormData({});
           setIsAddOpen(true);
         }}
-        addLabel="+ Add Tenant"
+        addLabel="+ Add Meter"
       />
 
       <AddModal<Meter>
